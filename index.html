@@ -28,17 +28,32 @@
       font-size: 17.5px;
       line-height: 1.7;
       color: var(--text);
-      background: #f1f5f9;
+      background: #0b1220;          /* dark base so neon shows nicely */
       -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* ===== Neon Network Background ===== */
+    #network-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
     }
 
     article {
+      position: relative;
+      z-index: 1;
       max-width: 820px;
       margin: 2rem auto;
       padding: 2.5rem 2rem 3.5rem;
-      background: #fff;
+      background: rgba(255, 255, 255, 0.94);   /* slight transparency so glow peeks through */
       border-radius: 14px;
-      box-shadow: 0 12px 40px rgba(0,0,0,0.06);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.18);
+      backdrop-filter: blur(6px);
     }
 
     /* Typography */
@@ -213,6 +228,10 @@
   </style>
 </head>
 <body>
+
+  <!-- Neon Network Canvas -->
+  <canvas id="network-bg"></canvas>
+
   <article>
 
     <!-- Banner Image (image3) -->
@@ -428,5 +447,108 @@
     </div>
 
   </article>
+
+  <script>
+    // ========== Light Neon Node Network Animation ==========
+    const canvas = document.getElementById('network-bg');
+    const ctx = canvas.getContext('2d');
+
+    let width, height;
+    let nodes = [];
+    const NODE_COUNT = 55;          // density
+    const MAX_DIST = 160;           // connection distance
+    const SPEED = 0.35;             // movement speed
+
+    // Soft neon palette
+    const colors = [
+      'rgba(0, 255, 255, 0.55)',    // cyan
+      'rgba(120, 180, 255, 0.5)',   // soft blue
+      'rgba(180, 120, 255, 0.45)',  // soft purple
+      'rgba(0, 220, 180, 0.5)'      // aqua
+    ];
+
+    function resize() {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    }
+
+    function createNodes() {
+      nodes = [];
+      for (let i = 0; i < NODE_COUNT; i++) {
+        nodes.push({
+          x: Math.random() * width,
+          y: Math.random() * height,
+          vx: (Math.random() - 0.5) * SPEED,
+          vy: (Math.random() - 0.5) * SPEED,
+          r: Math.random() * 2.2 + 1.2,
+          color: colors[Math.floor(Math.random() * colors.length)]
+        });
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, width, height);
+
+      // soft dark gradient background
+      const grad = ctx.createRadialGradient(width/2, height/2, 0, width/2, height/2, Math.max(width, height)*0.8);
+      grad.addColorStop(0, '#0f1a2e');
+      grad.addColorStop(1, '#070d18');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, width, height);
+
+      // update & draw nodes
+      for (let i = 0; i < nodes.length; i++) {
+        const n = nodes[i];
+        n.x += n.vx;
+        n.y += n.vy;
+
+        // bounce
+        if (n.x < 0 || n.x > width) n.vx *= -1;
+        if (n.y < 0 || n.y > height) n.vy *= -1;
+
+        // glow
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+        ctx.fillStyle = n.color;
+        ctx.shadowBlur = 12;
+        ctx.shadowColor = n.color;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+
+      // draw connections
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+          const a = nodes[i];
+          const b = nodes[j];
+          const dx = a.x - b.x;
+          const dy = a.y - b.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < MAX_DIST) {
+            const alpha = 1 - dist / MAX_DIST;
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.strokeStyle = `rgba(100, 200, 255, ${alpha * 0.28})`;
+            ctx.lineWidth = 0.9;
+            ctx.stroke();
+          }
+        }
+      }
+
+      requestAnimationFrame(draw);
+    }
+
+    // init
+    window.addEventListener('resize', () => {
+      resize();
+      createNodes();
+    });
+
+    resize();
+    createNodes();
+    draw();
+  </script>
 </body>
 </html>
