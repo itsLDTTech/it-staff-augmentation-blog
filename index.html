@@ -448,107 +448,107 @@
 
   </article>
 
-  <script>
-    // ========== Light Neon Node Network Animation ==========
-    const canvas = document.getElementById('network-bg');
-    const ctx = canvas.getContext('2d');
+ <script>
+  // ========== Light Neon Node Network Animation ==========
+  const canvas = document.getElementById('network-bg');
+  const ctx = canvas.getContext('2d');
 
-    let width, height;
-    let nodes = [];
-    const NODE_COUNT = 55;          // density
-    const MAX_DIST = 160;           // connection distance
-    const SPEED = 0.35;             // movement speed
+  let width, height;
+  let nodes = [];
+  const NODE_COUNT = 90;          // more nodes
+  const MAX_DIST = 230;           // longer connection distance → more edges
+  const SPEED = 0.75;             // faster movement
 
-    // Soft neon palette
-    const colors = [
-      'rgba(0, 255, 255, 0.55)',    // cyan
-      'rgba(120, 180, 255, 0.5)',   // soft blue
-      'rgba(180, 120, 255, 0.45)',  // soft purple
-      'rgba(0, 220, 180, 0.5)'      // aqua
-    ];
+  // Soft neon palette
+  const colors = [
+    'rgba(0, 255, 255, 0.55)',    // cyan
+    'rgba(120, 180, 255, 0.5)',   // soft blue
+    'rgba(180, 120, 255, 0.45)',  // soft purple
+    'rgba(0, 220, 180, 0.5)'      // aqua
+  ];
 
-    function resize() {
-      width = canvas.width = window.innerWidth;
-      height = canvas.height = window.innerHeight;
+  function resize() {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+  }
+
+  function createNodes() {
+    nodes = [];
+    for (let i = 0; i < NODE_COUNT; i++) {
+      nodes.push({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        vx: (Math.random() - 0.5) * SPEED,
+        vy: (Math.random() - 0.5) * SPEED,
+        r: Math.random() * 2.2 + 1.2,
+        color: colors[Math.floor(Math.random() * colors.length)]
+      });
+    }
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, width, height);
+
+    // soft dark gradient background
+    const grad = ctx.createRadialGradient(width/2, height/2, 0, width/2, height/2, Math.max(width, height)*0.8);
+    grad.addColorStop(0, '#0f1a2e');
+    grad.addColorStop(1, '#070d18');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, width, height);
+
+    // update & draw nodes
+    for (let i = 0; i < nodes.length; i++) {
+      const n = nodes[i];
+      n.x += n.vx;
+      n.y += n.vy;
+
+      // bounce
+      if (n.x < 0 || n.x > width) n.vx *= -1;
+      if (n.y < 0 || n.y > height) n.vy *= -1;
+
+      // glow
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+      ctx.fillStyle = n.color;
+      ctx.shadowBlur = 12;
+      ctx.shadowColor = n.color;
+      ctx.fill();
+      ctx.shadowBlur = 0;
     }
 
-    function createNodes() {
-      nodes = [];
-      for (let i = 0; i < NODE_COUNT; i++) {
-        nodes.push({
-          x: Math.random() * width,
-          y: Math.random() * height,
-          vx: (Math.random() - 0.5) * SPEED,
-          vy: (Math.random() - 0.5) * SPEED,
-          r: Math.random() * 2.2 + 1.2,
-          color: colors[Math.floor(Math.random() * colors.length)]
-        });
-      }
-    }
+    // draw connections
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        const a = nodes[i];
+        const b = nodes[j];
+        const dx = a.x - b.x;
+        const dy = a.y - b.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
 
-    function draw() {
-      ctx.clearRect(0, 0, width, height);
-
-      // soft dark gradient background
-      const grad = ctx.createRadialGradient(width/2, height/2, 0, width/2, height/2, Math.max(width, height)*0.8);
-      grad.addColorStop(0, '#0f1a2e');
-      grad.addColorStop(1, '#070d18');
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, width, height);
-
-      // update & draw nodes
-      for (let i = 0; i < nodes.length; i++) {
-        const n = nodes[i];
-        n.x += n.vx;
-        n.y += n.vy;
-
-        // bounce
-        if (n.x < 0 || n.x > width) n.vx *= -1;
-        if (n.y < 0 || n.y > height) n.vy *= -1;
-
-        // glow
-        ctx.beginPath();
-        ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
-        ctx.fillStyle = n.color;
-        ctx.shadowBlur = 12;
-        ctx.shadowColor = n.color;
-        ctx.fill();
-        ctx.shadowBlur = 0;
-      }
-
-      // draw connections
-      for (let i = 0; i < nodes.length; i++) {
-        for (let j = i + 1; j < nodes.length; j++) {
-          const a = nodes[i];
-          const b = nodes[j];
-          const dx = a.x - b.x;
-          const dy = a.y - b.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-
-          if (dist < MAX_DIST) {
-            const alpha = 1 - dist / MAX_DIST;
-            ctx.beginPath();
-            ctx.moveTo(a.x, a.y);
-            ctx.lineTo(b.x, b.y);
-            ctx.strokeStyle = `rgba(100, 200, 255, ${alpha * 0.28})`;
-            ctx.lineWidth = 0.9;
-            ctx.stroke();
-          }
+        if (dist < MAX_DIST) {
+          const alpha = 1 - dist / MAX_DIST;
+          ctx.beginPath();
+          ctx.moveTo(a.x, a.y);
+          ctx.lineTo(b.x, b.y);
+          ctx.strokeStyle = `rgba(100, 200, 255, ${alpha * 0.32})`;  // slightly stronger lines
+          ctx.lineWidth = 0.9;
+          ctx.stroke();
         }
       }
-
-      requestAnimationFrame(draw);
     }
 
-    // init
-    window.addEventListener('resize', () => {
-      resize();
-      createNodes();
-    });
+    requestAnimationFrame(draw);
+  }
 
+  // init
+  window.addEventListener('resize', () => {
     resize();
     createNodes();
-    draw();
-  </script>
+  });
+
+  resize();
+  createNodes();
+  draw();
+</script>
 </body>
 </html>
